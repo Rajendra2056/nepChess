@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NepChess</title>
+
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    <script src="js/jquery-1.12.4.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src = 'js/chess.js'></script>
+    <style>
+
+      .border{
+        border-style: solid;
+        border-color: black;
+
+      }
+
+
+      .clock1{
+       font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; 
+        color: blue;
+        font-size: 40px;
+        padding-left: 720px;
+        
+
+      }
+      .clock2{
+        color: blue;
+        font-size: 40px;
+        padding-left: 720px;
+
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+      }
+      body{
+        background-color:burlywood;
+      }
+      .board{
+        display: grid;
+        grid-template-columns: auto auto;
+      }
+      .pgn{
+        color: green;
+        margin-top: 50px ;
+  
+
+        font-size: 50px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="clock2" id = 'clock2' ></div>
+    <div class = "board">
+    <div id="myBoard" 
+    style=" margin-left: 300px; margin-top: 50px; height: 500px;width: 500px"></div>
+    <div class = "pgn" >
+    <label>Status:</label>
+    <div id="status"></div>
+    <label class="pgn ">PGN:</label>
+    <div id="pgn"></div>
+    </div>
+    </div>
+
+   <div class = "border">
+    <div class="clock1" id = 'clock1' ></div>
+    </div>
+    <div class="border">
+    <div class = "clock2" id = 'clock2'></div>
+    </div>
+
+
+
+
+
+
+
+    <script> 
+       
+       
+var board = null
+var count = 1;
+var game = new Chess()
+var $status = $('#status')
+var $fen = $('#fen')
+var $pgn = $('#pgn')
+const startingTime = 5;
+let TimesinSOfplayer2 = startingTime * 60;
+
+let TimeinSOfPlayer1 = startingTime * 60;
+
+
+const timerOfPlayer1 = document.getElementById('clock1');
+const timerOfPlayer2 = document.getElementById('clock2')
+
+setInterval(() => {
+  updateClock()
+  
+}, 1000);
+
+function updateClock (){
+
+  if(game.turn()=='w'){
+  const TimeRemaining = Math.floor(TimeinSOfPlayer1 / 60);
+  let seconds = TimeinSOfPlayer1 % 60;
+  timerOfPlayer1.innerHTML = `  ${TimeRemaining} : ${seconds}  `
+  if(count === 1){ 
+  timerOfPlayer2.innerHTML = ` ${TimeRemaining}: ${seconds} `
+count ++;
+
+}
+  TimeinSOfPlayer1 --;
+}
+else {
+  const TimeRemainingOfPlayer2 =  Math.floor(TimesinSOfplayer2 / 60);
+  let secondsOfPlayer2 = TimesinSOfplayer2 % 60;
+  timerOfPlayer2.innerHTML = `${TimeRemainingOfPlayer2}: ${secondsOfPlayer2} `
+  TimesinSOfplayer2--;
+
+}
+
+}
+
+
+function onDragStart (source, piece, position, orientation) {
+  // do not pick up pieces if the game is over
+  if (game.game_over()) return false
+
+
+
+  
+
+  // only pick up pieces for the side to move
+  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+    return false
+  }
+}
+
+function onDrop (source, target) {
+  var audio =  new Audio('audio.mp3');
+  audio.play('audio.mp3')
+  // see if the move is legal
+  var move = game.move({
+    from: source,
+    to: target,
+    promotion: 'q' // NOTE: always promote to a queen for example simplicity
+  })
+
+  // illegal move
+  if (move === null) return 'snapback'
+
+  updateStatus()
+}
+
+// update the board position after the piece snap
+// for castling, en passant, pawn promotion
+function onSnapEnd () {
+  board.position(game.fen())
+}
+
+function updateStatus () {
+  var status = ''
+
+  var moveColor = 'White'
+  if (game.turn() === 'b') {
+    moveColor = 'Black'
+    board.orientation('black')
+  }
+  else{
+    board.orientation('white')
+  }
+
+  // checkmate?
+  if (game.in_checkmate()) {
+    status = 'Game over, ' + moveColor + ' is in checkmate.'
+  }
+
+  // draw?
+  else if (game.in_draw()) {
+    status = 'Game over, drawn position'
+  }
+
+  // game still on
+  else {
+    status = moveColor + ' to move'
+
+    // check?
+    if (game.in_check()) {
+      status += ', ' + moveColor + ' is in check'
+    }
+  }
+
+  $status.html(status)
+  $fen.html(game.fen())
+  $pgn.html(game.pgn())
+}
+
+var config = {
+  draggable: true,
+  position: 'start',
+  onDragStart: onDragStart,
+  onDrop: onDrop,
+  onSnapEnd: onSnapEnd
+}
+board = Chessboard('myBoard', config)
+
+updateStatus()
+
+
+
+
+
+</script>
+  </body>
+</html>
